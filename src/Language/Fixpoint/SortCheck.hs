@@ -107,7 +107,7 @@ checkSortExpr γ e = case runCM0 $ checkExpr f e of
 
 elaborate :: SEnv Sort -> Expr -> Expr
 elaborate γ e
-  = case runCM0 $ elab f e of
+  = case runCM1 $ elab f e of
       Left msg -> die $ err dummySpan (d msg)
       Right s  -> fst s
   where
@@ -124,7 +124,7 @@ elaborate γ e
 
 -- | Types used throughout checker
 
-type StateM = Int
+data StateM = STM {freshInt :: Int, checkNum :: Bool} 
 
 newtype CheckM a = CM {runCM :: StateM -> (StateM, Either String a)}
 
@@ -155,7 +155,10 @@ instance Applicative CheckM where
                                  (k, Right g) -> (k, Right $ g x)
 
 initCM = 42
-runCM0 act = snd $ runCM act initCM
+runCM0 act = snd $ runCM act (STM initCM True)
+runCM1 act = snd $ runCM act (STM initCM False)
+
+getNumeric = CM (\st -> (st, Right (checkNum st)))
 
 class Freshable a where
   fresh   :: CheckM a
@@ -163,7 +166,7 @@ class Freshable a where
   refresh _ = fresh
 
 instance Freshable Int where
-  fresh = CM (\n -> (n+1, Right n))
+  fresh = CM (\st -> (st{freshInt = (freshInt st)+1}, Right (freshInt st)))
 
 instance Freshable [Int] where
   fresh   = mapM (const fresh) [0..]
@@ -507,6 +510,10 @@ checkFractional f l
        return ()
 
 checkNumeric f l
+  = do flag <- getNumeric  
+       if flag then checkNumeric' f l else return ()
+
+checkNumeric' f l 
   = do t <- checkSym f l
        unless (t == FNum || t == FFrac) (throwError $ errNonNumeric l)
        return ()
@@ -686,7 +693,7 @@ sortFunction i t
      Just (_, ts, t') -> if length ts < i 
                           then throwError $ errNonFunction i t
                           else let (its, ots) = splitAt i ts 
-                               in return (its, foldl FFunc t' ots)
+                               in return (its, foldl (flip FFunc) t' ots)
 
 ------------------------------------------------------------------------
 -- | API for manipulating Sort Substitutions ---------------------------
