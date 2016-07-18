@@ -577,6 +577,14 @@ checkNumeric f s@(FObj l)
 checkNumeric _ s
   = unless (isNumeric s) (throwError $ errNonNumeric s)
 
+
+checkString :: Env -> Sort -> CheckM ()
+checkString f s@(FObj l)
+  = do t <- checkSym f l
+       unless (t == FStr) (throwError $ errNonNumeric s)
+checkString _ s
+  = unless (isString s) (throwError $ errNonNumeric s)
+
 --------------------------------------------------------------------------------
 -- | Checking Predicates -------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -703,6 +711,15 @@ unify1 f e θ FInt t = do
 
 unify1 _ _ θ t1 t2 | isString t1, isString t2
   = return θ
+
+unify1 f _ θ t1 t2 | isString t2
+  = do checkString f t1 
+       return θ
+
+unify1 f _ θ t1 t2 | isString t1
+  = do checkString f t2
+       return θ
+
 
 unify1 f e θ (FFunc t1 t2) (FFunc t1' t2') = do
   unifyMany f e θ [t1, t2] [t1', t2']

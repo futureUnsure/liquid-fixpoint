@@ -167,6 +167,7 @@ functionSort s
 
 data Sort = FInt
           | FReal
+          | FStr 
           | FNum                 -- ^ numeric kind for Num tyvars
           | FFrac                -- ^ numeric kind for Fractional tyvars
           | FObj  !Symbol        -- ^ uninterpreted type
@@ -251,6 +252,7 @@ toFixSort (FVar i)     = text "@"   <> parens (toFix i)
 toFixSort FInt         = text "int"
 toFixSort FReal        = text "real"
 toFixSort FFrac        = text "frac"
+toFixSort FStr         = text "str"
 toFixSort (FObj x)     = toFix x
 toFixSort FNum         = text "num"
 toFixSort t@(FAbs _ _) = toFixAbsApp t

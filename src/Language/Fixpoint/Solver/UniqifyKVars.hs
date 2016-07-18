@@ -95,6 +95,7 @@ isValidInRefinements :: Sort -> Bool
 isValidInRefinements FInt        = True
 isValidInRefinements FReal       = True
 isValidInRefinements FNum        = False
+isValidInRefinements FStr        = False
 isValidInRefinements FFrac       = False
 isValidInRefinements (FObj _)    = True
 isValidInRefinements (FVar _)    = True
