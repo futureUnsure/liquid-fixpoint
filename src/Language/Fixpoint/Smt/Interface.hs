@@ -56,7 +56,7 @@ module Language.Fixpoint.Smt.Interface (
     ) where
 
 import           Language.Fixpoint.Types.Config (SMTSolver (..), Config, solver, extensionality, alphaEquivalence, betaEquivalence, normalForm)
-import           Language.Fixpoint.Misc   (errorstar, getUniqueInt)
+import           Language.Fixpoint.Misc   (errorstar, getUniqueInt, traceShow)
 import           Language.Fixpoint.Types.Errors
 import           Language.Fixpoint.Utils.Files
 import           Language.Fixpoint.Types hiding (allowHO)
@@ -225,7 +225,7 @@ smtWriteRaw me !s = {-# SCC "smtWriteRaw" #-} do
   maybe (return ()) (`hPutStrLnNow` s) (cLog me)
 
 smtReadRaw       :: Context -> IO T.Text
-smtReadRaw me    = {-# SCC "smtReadRaw" #-} TIO.hGetLine (cIn me)
+smtReadRaw me    = {-# SCC "smtReadRaw" #-} TIO.hGetLine (traceShow "READ RAW" $ cIn me)
 
 hPutStrLnNow     :: Handle -> LT.Text -> IO ()
 hPutStrLnNow h !s = LTIO.hPutStrLn h s >> hFlush h
