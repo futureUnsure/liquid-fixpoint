@@ -159,7 +159,7 @@ command me !cmd       = do n <- getUniqueInt
 
 
 smtWrite :: Context -> Raw -> IO ()
-smtWrite me !s = smtWriteRaw me s
+smtWrite me !s = smtWriteRaw me (traceShow "WRITING" s)
 
 smtRead :: Context -> IO Response
 smtRead me = {-# SCC "smtRead" #-}
