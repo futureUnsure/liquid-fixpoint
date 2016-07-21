@@ -163,8 +163,8 @@ smtWrite me !s = smtWriteRaw me s
 
 smtRead :: Context -> IO Response
 smtRead me = {-# SCC "smtRead" #-}
-    do ln  <- smtReadRaw me
-       res <- A.parseWith (smtReadRaw me) responseP ln
+    do ln  <- smtReadRaw "smtRead1" me
+       res <- A.parseWith (smtReadRaw "smtRead2" me) responseP ln
        case A.eitherResult res of
          Left e  -> errorstar $ "SMTREAD:" ++ e
          Right r -> do
@@ -224,8 +224,9 @@ smtWriteRaw me !s = {-# SCC "smtWriteRaw" #-} do
   -- whenLoud $ TIO.appendFile debugFile (s <> "\n")
   maybe (return ()) (`hPutStrLnNow` s) (cLog me)
 
-smtReadRaw       :: Context -> IO T.Text
-smtReadRaw me    = {-# SCC "smtReadRaw" #-} TIO.hGetLine (traceShow "READ RAW" $ cIn me)
+smtReadRaw       :: String -> Context -> IO T.Text
+smtReadRaw str me = do t <- {-# SCC "smtReadRaw" #-} TIO.hGetLine (traceShow (str ++ " READ RAW") $ cIn me)
+                       return $ traceShow ("READ : " ++ show t) t  
 
 hPutStrLnNow     :: Handle -> LT.Text -> IO ()
 hPutStrLnNow h !s = LTIO.hPutStrLn h s >> hFlush h
@@ -297,7 +298,7 @@ smtCmd Cvc4    = "cvc4 --incremental -L smtlib2"
 smtPreamble :: Config -> SMTSolver -> Context -> IO [LT.Text]
 smtPreamble cfg Z3 me
   = do smtWrite me "(get-info :version)"
-       v:_ <- T.words . (!!1) . T.splitOn "\"" <$> smtReadRaw me
+       v:_ <- T.words . (!!1) . T.splitOn "\"" <$> smtReadRaw "Preamble" me
        if T.splitOn "." v `versionGreater` ["4", "3", "2"]
          then return $ z3_432_options ++ makeMbqi cfg ++ preamble cfg Z3
          else return $ z3_options     ++ makeMbqi cfg ++ preamble cfg Z3
