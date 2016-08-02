@@ -122,6 +122,7 @@ instance SMTLIB2 Expr where
   smt2 (PAtom r e1 e2)  = mkRel r e1 e2
   smt2 PGrad            = "true"
   smt2 (ELam (x, _) e)  = smt2Lam x e
+  smt2 (ETApp e _)      = smt2 e 
   smt2  e               = errorstar ("smtlib2 Pred  " ++ show e)
 
 

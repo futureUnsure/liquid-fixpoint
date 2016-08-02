@@ -330,3 +330,5 @@ exitColorStrLn c s = do
   putStrLn "\n"
   colorStrLn c s
 -}
+
+mapSnd f (x, y) = (x, f y)

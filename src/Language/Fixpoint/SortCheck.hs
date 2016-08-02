@@ -293,11 +293,11 @@ elab f e@(EBin o e1 e2) = do
 
 elab f (EApp e1@(EApp _ _) e2) = do
   (e1', _, e2', s2, s) <- elabEApp f e1 e2
-  return (EApp e1' (ECst e2' s2), s)
+  return $ (EApp e1' (ECst e2' s2), s)
 
 elab f (EApp e1 e2) = do
   (e1', s1, e2', s2, s) <- elabEApp f e1 e2
-  return (EApp (ECst e1' s1) (ECst e2' s2), s)
+  return $ (EApp (ECst e1' s1) (ECst e2' s2), s)
 
 elab _ e@(ESym _) =
   return (e, strSort)
@@ -394,7 +394,8 @@ elabAs f _ e            = fst <$> elab f e
 
 elabAppAs :: Env -> Sort -> Expr -> Expr -> CheckM Expr
 elabAppAs f t g e = do
-  gT       <- generalize =<< checkExpr f g
+  gT'      <- checkExpr f g
+  (is, gT) <- generalize' gT'
   eT       <- checkExpr f e
   (iT, oT) <- checkFunSort gT
   let ge    = Just (EApp g e)
@@ -403,7 +404,13 @@ elabAppAs f t g e = do
   g'       <- elabAs f tg g
   let te    = apply su eT
   e'       <- elabAs f te e
-  return $ EApp (ECst g' tg) (ECst e' te)
+  let insts = mapSnd (apply su) <$> is    
+  g''      <- instType g' insts
+  return $ EApp (ECst g'' tg) (ECst e' te)
+
+
+instType ::  Expr -> [(Int,Sort)] ->  CheckM Expr 
+instType e is = return $ foldl ETApp e (snd <$> is) 
 
 {-
 elabAppAs :: Env -> Sort -> Expr -> [Expr] -> CheckM Expr
@@ -708,13 +715,16 @@ subst (j,tj) (FAbs i t)
 subst _  s             = s
 
 
-generalize :: Sort -> CheckM Sort
-generalize (FAbs i t) = do
+generalize' :: Sort -> CheckM ([(Int, Sort)], Sort)
+generalize' (FAbs i t) = do
   v      <- refresh 0
   let sub = (i, FVar v)
-  subst sub <$> generalize t
-generalize t =
-  return t
+  (acc, t') <- mapSnd (subst sub) <$> generalize' t
+  return ((i, FVar v):acc, t')
+generalize' t =
+  return ([], t)
+
+generalize t = snd <$> generalize' t 
 
 unifyVar :: Env -> Maybe Expr -> TVSubst -> Int -> Sort -> CheckM TVSubst
 unifyVar _ _ θ i t@(FVar j)

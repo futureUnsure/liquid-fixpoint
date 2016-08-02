@@ -10,7 +10,7 @@
 
 module Language.Fixpoint.Defunctionalize.Defunctionalize (defunctionalize) where
 
-import           Language.Fixpoint.Misc            (secondM, errorstar)
+import           Language.Fixpoint.Misc            (secondM, errorstar, traceShow, mapSnd)
 import           Language.Fixpoint.Solver.Validate (symbolSorts)
 import           Language.Fixpoint.Types        hiding (allowHO)
 import           Language.Fixpoint.Types.Config hiding (eliminate)
@@ -65,7 +65,7 @@ instance Defunc Expr where
        | hoFlag 
        = defuncExpr (txnumOverloading e)
        | otherwise 
-       = return     (txnumOverloading e)
+       = return     (txOverloading . txnumOverloading $ e)
 
 
 defuncExpr :: Expr -> DF Expr
@@ -274,7 +274,6 @@ normalize = snd . go
     go (ECst e s)       = mapSnd (`ECst` s) (go e)
     go (PAll bs e)      = mapSnd (PAll bs)  (go e)
     go e                = (1, e)
-    mapSnd f (x, y) = (x, f y)
     unECst (ECst e _) = unECst e 
     unECst e          = e 
 
@@ -294,8 +293,6 @@ normalizeLamsFromTo i e = go e
     go (ECst e s)       = mapSnd (`ECst` s) (go e)
     go (PAll bs e)      = mapSnd (PAll bs) (go e)
     go e                = (i, e)
-
-    mapSnd f (x, y) = (x, f y)
 
 
 -------------------------------------------------------------------------------
@@ -366,6 +363,14 @@ txnumOverloading = mapExpr go
       | exprSort e1 == FReal, exprSort e2 == FReal
       = ERDiv   e1 e2 
     go e 
+      = e
+txOverloading :: Expr -> Expr 
+txOverloading = mapExpr go 
+  where 
+    go e@(ECst (EApp f x) s)
+      | Just _ <-  traceShow ("overloading for " ++ showpp e ++ "\nTO\n" ++ showpp s) $ Thy.smt2Sort s
+      = toInt $ EApp f x
+    go' e 
       = e 
 
 
