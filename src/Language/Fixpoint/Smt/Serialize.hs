@@ -155,7 +155,7 @@ mkNe  e1 e2              = build "(not (= {} {}))" (smt2 e1, smt2 e2)
 
 instance SMTLIB2 Command where
   -- NIKI TODO: formalize this transformation
-  smt2 (Declare x ts t)    = build "(declare-fun {} ({}) {})"     (smt2 x, traceShow ("Declare for " ++ show x) $ smt2s ts, traceShow ("Declare Result for " ++ show x) $  smt2 t)
+  smt2 (Declare x ts t)    = build "(declare-fun {} ({}) {})"     (smt2 x, smt2s $ traceShow ("Declare for " ++ show x) ts, smt2 $ traceShow ("Declare Result for " ++ show x) t)
   smt2 (Define t)          = build "(declare-sort {})"            (Only $ smt2 t)
   smt2 (Assert Nothing p)  = build "(assert {})"                  (Only $ smt2 p)
   smt2 (Assert (Just i) p) = build "(assert (! {} :named p-{}))"  (smt2 p, i)
