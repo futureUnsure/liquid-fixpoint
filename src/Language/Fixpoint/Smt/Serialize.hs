@@ -20,7 +20,7 @@ import qualified Language.Fixpoint.Smt.Theories as Thy
 import           Data.Monoid
 import qualified Data.Text.Lazy.Builder         as Builder
 import           Data.Text.Format
-import           Language.Fixpoint.Misc (errorstar)
+import           Language.Fixpoint.Misc (errorstar, traceShow)
 import           Data.Maybe (fromMaybe)
 
 {-
